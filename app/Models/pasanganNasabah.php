@@ -5,7 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class pasanganNasabah extends Model
+class PasanganNasabah extends Model
 {
     protected $fillable = [
         'nasabah_id', 'nama', 'nomor_telepon', 'alamat', 'jenis_kelamin',
