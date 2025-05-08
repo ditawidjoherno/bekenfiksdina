@@ -7,7 +7,6 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 use Tymon\JWTAuth\Contracts\JWTSubject;
-use App\Models\Nasabah; // Import Model Nasabah
 
 class User extends Authenticatable implements JWTSubject
 {
@@ -19,18 +18,7 @@ class User extends Authenticatable implements JWTSubject
      * @var array<int, string>
      */
     protected $fillable = [
-        'nip',
-        'password',
-        'nama',
-        'alamat',
-        'email',
-        'foto_profil',
-        'jabatan',
-        'jenis_kelamin',
-        'nomor_hp',
-        'tanggal_lahir',
-        'tempat_lahir',
-        'role', // Menambahkan role
+        'nama', 'role', 'nisn', 'nip', 'kelas', 'jenis_kelamin', 'agama', 'email', 'password', 'foto_profil',
     ];
 
     /**
@@ -91,4 +79,10 @@ class User extends Authenticatable implements JWTSubject
     {
         return $this->hasMany(TargetTahunan::class);
     }
+
+    public function ekskulDetail()
+{
+    return $this->hasMany(DetailEkskul::class, 'anggota_user_id');
+}
+
 }

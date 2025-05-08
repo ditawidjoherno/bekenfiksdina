@@ -9,21 +9,19 @@ return new class extends Migration
     /**
      * Run the migrations.
      */
-    public function up()
+    public function up(): void
     {
         Schema::create('users', function (Blueprint $table) {
             $table->id();
-            $table->string('nip')->unique();
+            $table->string('nama');
+            $table->string('role'); // 'siswa' atau 'guru'
+            $table->string('nisn')->nullable()->unique(); // untuk siswa
+            $table->string('nip')->nullable()->unique();  // untuk guru
+            $table->string('kelas')->nullable();         
+            $table->enum('jenis_kelamin', ['L', 'P'])->nullable(); 
+            $table->string('agama')->nullable();
+            $table->string('email')->unique();            
             $table->string('password');
-            $table->string('nama'); 
-            $table->string('alamat');
-            $table->string('email')->unique();
-            $table->string('foto_profil')->nullable();
-            $table->enum('jabatan', ['admin', 'staff', 'manager', 'unit head']);
-            $table->enum('jenis_kelamin', ['Laki-laki', 'Perempuan']);
-            $table->string('nomor_hp');
-            $table->date('tanggal_lahir');
-            $table->string('tempat_lahir');
             $table->timestamps();
         });
     }

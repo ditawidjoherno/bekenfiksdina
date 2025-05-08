@@ -9,206 +9,108 @@ use Tymon\JWTAuth\Facades\JWTAuth;
 use Tymon\JWTAuth\Exceptions\JWTException;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Validator;
 
 class AuthController extends Controller
 {
+    public function register(Request $request)
+    {
+        // Validasi input
+        $request->validate([
+            'nama' => 'required|string',
+            'role' => 'required|in:siswa,guru',
+            'nisn' => 'nullable|required_without:nip|unique:users',
+            'nip' => 'nullable|required_without:nisn|unique:users',
+            'kelas' => 'nullable',
+            'jenis_kelamin' => 'nullable|in:L,P',
+            'agama' => 'nullable',
+            'email' => 'required|email|unique:users',
+            'password' => 'required|string|min:8', 
+        ]);
+
+        // Simpan user
+        $user = User::create([
+            'nama' => $request->nama,
+            'role' => $request->role,
+            'nisn' => $request->nisn,
+            'nip' => $request->nip,
+            'kelas' => $request->kelas,
+            'jenis_kelamin' => $request->jenis_kelamin,
+            'agama' => $request->agama,
+            'email' => $request->email,
+            'password' => Hash::make($request->password), 
+        ]);
+
+        return response()->json([
+            'message' => 'User berhasil ditambahkan',
+            'user' => $user
+        ], 201);
+        
+    }
+
+    public function index()
+    {
+        $users = User::all();
+        return response()->json($users);
+    }
+    
     public function login(Request $request)
     {
-        $credentials = $request->only('nip', 'password');
-
         try {
-            if (!$token = JWTAuth::attempt($credentials)) {
-                return response()->json(['error' => 'invalid_credentials'], 401);
+            $request->validate([
+                'identifier' => 'required|string',
+                'password' => 'required|string',
+            ]);
+    
+            $user = User::where('nisn', $request->identifier)
+                        ->orWhere('nip', $request->identifier)
+                        ->first();
+    
+            if (!$user) {
+                return response()->json(['message' => 'User tidak ditemukan!'], 401);
             }
-        } catch (JWTException $e) {
-            return response()->json(['error' => 'could_not_create_token'], 500);
-        }
-
-        return response()->json([
-            'data' => [
+    
+            if (!Hash::check($request->password, $user->password)) {
+                return response()->json(['message' => 'Password salah!'], 401);
+            }
+    
+            // Coba generate token, tapi tangani jika ada error
+            try {
+                $token = $user->createToken('auth_token')->plainTextToken;
+            } catch (\Exception $e) {
+                Log::error('Token creation failed: ' . $e->getMessage());
+                return response()->json(['message' => 'Gagal membuat token.'], 500);
+            }
+    
+            return response()->json([
+                'message' => 'Login berhasil!',
+                'user' => $user,
                 'token' => $token,
-            ],
-            'message' => 'Login successful'
-        ]);
-    }
-
-    public function logout()
-    {
-        auth()->logout();
-        return response()->json(['message' => 'Successfully logged out']);
-    }
-  
-    public function addUser(Request $request)
-{
-    // Validasi data yang dikirimkan
-    $validated = $request->validate([
-        'nip' => 'required|unique:users,nip',
-        'password' => 'required',
-        'nama' => 'required',
-        'alamat' => 'required',
-        'email' => 'required|email|unique:users,email',
-        'jabatan' => 'required|in:admin,staff,manager,unit head',
-        'jenis_kelamin' => 'required|in:Laki-laki,Perempuan',
-        'nomor_hp' => 'required',
-        'tanggal_lahir' => 'required|date',
-        'tempat_lahir' => 'required',
-    ], [
-        'nip.required' => 'NIP harus diisi.',
-        'nip.unique' => 'NIP sudah terdaftar.',
-        'password.required' => 'Password harus diisi.',
-        'nama.required' => 'Nama harus diisi.',
-        'alamat.required' => 'Alamat harus diisi.',
-        'email.required' => 'Email harus diisi.',
-        'email.email' => 'Email yang dimasukkan tidak valid.',
-        'email.unique' => 'Email sudah terdaftar.',
-        'jabatan.required' => 'Jabatan harus diisi.',
-        'jabatan.in' => 'Jabatan harus salah satu dari admin, staff, manager, atau unit head.',
-        'jenis_kelamin.required' => 'Jenis kelamin harus diisi.',
-        'jenis_kelamin.in' => 'Jenis kelamin harus salah satu dari Laki-laki atau Perempuan.',
-        'nomor_hp.required' => 'Nomor HP harus diisi.',
-        'tanggal_lahir.required' => 'Tanggal lahir harus diisi.',
-        'tanggal_lahir.date' => 'Tanggal lahir harus berupa tanggal yang valid.',
-        'tempat_lahir.required' => 'Tempat lahir harus diisi.',
-    ]);
-
-    // Jika validasi berhasil, lanjutkan untuk membuat user baru
-    try {
-        $user = User::create([
-            'nip' => $request->nip,
-            'password' => Hash::make($request->password),
-            'nama' => $request->nama,
-            'alamat' => $request->alamat,
-            'email' => $request->email,
-            'jabatan' => $request->jabatan,
-            'jenis_kelamin' => $request->jenis_kelamin,
-            'nomor_hp' => $request->nomor_hp,
-            'tanggal_lahir' => $request->tanggal_lahir,
-            'tempat_lahir' => $request->tempat_lahir,
-        ]);
-
-        return response()->json(['message' => 'User berhasil dibuat', 'user' => $user], 201);
-    } catch (\Exception $e) {
-        return response()->json([
-            'message' => 'Terjadi kesalahan saat membuat user: ' . $e->getMessage()
-        ], 500);
-    }
-}
-
-    public function updateProfile(Request $request)
-    {
-        $user = auth()->user();
+            ]);
     
-        $request->validate([
-            'nama' => 'sometimes|string|max:255',
-            'alamat' => 'sometimes|string|max:255',
-            'email' => 'sometimes|email|unique:users,email,' . $user->id,
-            'nomor_hp' => 'sometimes|string|max:15',
-            'tanggal_lahir' => 'sometimes|date',
-            'tempat_lahir' => 'sometimes|string|max:255',
-        ]);
-    
-        $user->update($request->only([
-            'nama',
-            'alamat',
-            'email',
-            'nomor_hp',
-            'tanggal_lahir',
-            'tempat_lahir'
-        ]));
-    
-        return response()->json([
-            'message' => 'Profile updated successfully',
-            'user' => $user
-        ], 200);
-    }
-    
-
-    public function changePassword(Request $request)
-    {
-        $request->validate([
-            'new_password' => 'required|string|min:6|confirmed',
-        ]);
-
-        $user = Auth::user();
-        $user->password = Hash::make($request->new_password);
-        $user->save();
-
-        return response()->json(['message' => 'Password changed successfully'], 200);
-    }
-
-    public function updateProfileImage(Request $request)
-    {
-        $request->validate([
-            'foto_profil' => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
-        ]);
-    
-        $user = auth()->user();
-    
-        if ($request->hasFile('foto_profil')) {
-            // Hapus gambar lama jika ada
-            if ($user->foto_profil && Storage::exists(str_replace('/storage/', '', $user->foto_profil))) {
-                Storage::delete(str_replace('/storage/', '', $user->foto_profil));
-            }
-    
-            // Simpan gambar baru
-            $imagePath = $request->file('foto_profil')->store('profile_images', 'public');
-            $user->foto_profil = Storage::url($imagePath);
-            $user->save();
-    
+        } catch (\Throwable $e) {
+            Log::error('Login Error: ' . $e->getMessage());
             return response()->json([
-                'message' => 'Foto Profil berhasil diperbarui.',
-                'foto_profil' => $user->foto_profil,
-            ], 200);
-        }
-    
-        return response()->json(['error' => 'No image file found'], 400);
-    }
-
-    public function getStaffData()
-    {
-        try {
-            $staffData = User::where('jabatan', 'staff')
-                ->select('id as user_id', 'nip', 'nama', 'foto_profil')  
-                ->get();
-    
-            $staffData->transform(function ($staff) {
-                $staff->foto_profil = $staff->foto_profil 
-                    ? url($staff->foto_profil) 
-                    : null;
-                return $staff;
-            });
-    
-            return response()->json([
-                'success' => true,
-                'data' => $staffData
-            ], 200);
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Gagal mengambil data staff',
-                'error' => $e->getMessage()
+                'message' => 'Terjadi kesalahan saat login.',
+                'error' => $e->getMessage(),
             ], 500);
         }
     }
     
 
-    public function namaStaffNip(Request $request)
+    // Logout method (opsional)
+    public function logout()
     {
-        $nip = $request->query('nip');
+        JWTAuth::invalidate(JWTAuth::getToken());
 
-        $user = user::where('nip', $nip)->first();
-
-        if ($user) {
-            return response()->json([
-                'nip' => $user->nip,
-                'nama' => $user->nama,
-                'jabatan' => $user->jabatan,
-                'foto_profil' => $user->foto_profil,
-            ]);
-        } else {
-            return response()->json([
-                'message' => 'Staff not found'
-            ], 404);
-        }
+        return response()->json(['message' => 'Successfully logged out']);
     }
+
+    public function profile(Request $request)
+    {
+        $user = JWTAuth::user(); // Mendapatkan data user yang sedang login
+
+        return response()->json(['user' => $user]);
+    }
+    
 }

@@ -11,13 +11,9 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('target_mingguan', function (Blueprint $table) {
+        Schema::create('aktivitas_kegiatan_user', function (Blueprint $table) {
             $table->id();
-            $table->string('nip');
-            $table->text('target');
             $table->timestamps();
-
-            $table->foreign('nip')->references('nip')->on('users')->onDelete('cascade');
         });
     }
 
@@ -26,6 +22,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('target_mingguan');
+        Schema::dropIfExists('aktivitas_kegiatan_user');
     }
 };

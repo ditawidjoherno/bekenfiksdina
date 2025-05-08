@@ -11,12 +11,13 @@ return new class extends Migration
      */
     public function up()
     {
-        Schema::create('dokumentasi', function (Blueprint $table) {
+        Schema::create('ekskuls', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('aktivitas_id')->constrained('aktivitas')->onDelete('cascade');
-            $table->string('file_path'); // Menyimpan path file dokumentasi
+            $table->string('nama_ekskul');
+            $table->string('penanggung_jawab');
+            $table->string('cover_gambar');
             $table->timestamps();
-        });
+        });    
     }
 
     /**
@@ -24,6 +25,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('dokumentasi');
+        Schema::dropIfExists('ekskul');
     }
 };
