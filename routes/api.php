@@ -9,6 +9,7 @@ use App\Http\Controllers\AktivitasKegiatanController;
 use App\Http\Controllers\AbsensiController;
 use App\Http\Controllers\EkskulController;
 use App\Http\Controllers\DetailEkskulController;
+use App\Http\Controllers\ActivityController;
 
 Route::get('/sanctum/csrf-cookie', [CsrfCookieController::class, 'show']);
 
@@ -17,7 +18,7 @@ Route::get('/users', [AuthController::class, 'index']);
 Route::post('/login', [AuthController::class, 'login']);
 Route::post('/logout', [AuthController::class, 'logout']);
 Route::middleware('auth:sanctum')->get('user', [UserController::class, 'getUserData']); // User data API
-
+Route::get('/recent-activity', [ActivityController::class, 'index']);
 Route::prefix('kegiatan')->group(function () {
     // GET /api/kegiatan
     Route::get('/', [AktivitasKegiatanController::class, 'index']);

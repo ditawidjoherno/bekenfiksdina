@@ -1,6 +1,8 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Config;
+
 
 /*
 |--------------------------------------------------------------------------
@@ -15,4 +17,12 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
     return view('welcome');
+    
+});
+
+Route::get('/env-test', function () {
+    return response()->json([
+        'env_DB_USERNAME' => env('DB_USERNAME'),
+        'config_DB_USERNAME' => config('database.connections.mysql.username'),
+    ]);
 });

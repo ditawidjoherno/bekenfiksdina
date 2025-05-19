@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use Illuminate\Support\Facades\Log;
 use Illuminate\Http\Request;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
@@ -9,7 +10,7 @@ use Tymon\JWTAuth\Facades\JWTAuth;
 use Tymon\JWTAuth\Exceptions\JWTException;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Facades\Validator;
+
 
 class AuthController extends Controller
 {
@@ -54,54 +55,64 @@ class AuthController extends Controller
         return response()->json($users);
     }
     
-    public function login(Request $request)
-    {
-        try {
-            $request->validate([
-                'identifier' => 'required|string',
-                'password' => 'required|string',
-            ]);
-    
-            $user = User::where('nisn', $request->identifier)
-                        ->orWhere('nip', $request->identifier)
-                        ->first();
-    
-            if (!$user) {
-                return response()->json(['message' => 'User tidak ditemukan!'], 401);
-            }
-    
-            if (!Hash::check($request->password, $user->password)) {
-                return response()->json(['message' => 'Password salah!'], 401);
-            }
-    
-            // Coba generate token, tapi tangani jika ada error
-            try {
-                $token = $user->createToken('auth_token')->plainTextToken;
-            } catch (\Exception $e) {
-                Log::error('Token creation failed: ' . $e->getMessage());
-                return response()->json(['message' => 'Gagal membuat token.'], 500);
-            }
-    
-            return response()->json([
-                'message' => 'Login berhasil!',
-                'user' => $user,
-                'token' => $token,
-            ]);
-    
-        } catch (\Throwable $e) {
-            Log::error('Login Error: ' . $e->getMessage());
-            return response()->json([
-                'message' => 'Terjadi kesalahan saat login.',
-                'error' => $e->getMessage(),
-            ], 500);
+public function login(Request $request)
+{
+    try {
+        $request->validate([
+            'identifier' => 'required|string',
+            'password' => 'required|string',
+        ]);
+
+        $user = User::where('nisn', $request->identifier)
+                    ->orWhere('nip', $request->identifier)
+                    ->first();
+
+        if (!$user) {
+            return response()->json(['message' => 'User tidak ditemukan!'], 401);
         }
+
+        if (!Hash::check($request->password, $user->password)) {
+            return response()->json(['message' => 'Password salah!'], 401);
+        }
+
+        $token = JWTAuth::fromUser($user);
+
+        // ✅ Letakkan log aktivitas di sini:
+        \App\Models\UserActivity::create([
+            'user_id' => $user->id,
+            'action' => 'Login',
+            'description' => 'User berhasil login.',
+        ]);
+
+        return response()->json([
+            'message' => 'Login berhasil!',
+            'user' => $user,
+            'token' => $token,
+            'token_type' => 'bearer',
+            'expires_in' => auth('api')->factory()->getTTL() * 60
+        ]);
+        
+    } catch (\Throwable $e) {
+        \Log::error('Login Error: ' . $e->getMessage());
+        return response()->json([
+            'message' => 'Terjadi kesalahan saat login.',
+            'error' => $e->getMessage(),
+        ], 500);
     }
-    
+}
+
 
     // Logout method (opsional)
     public function logout()
     {
         JWTAuth::invalidate(JWTAuth::getToken());
+        
+        UserActivity::create([
+    'user_id' => auth()->id(),
+    'action' => 'Logout',
+    'description' => 'User berhasil logout.',
+]);
+
 
         return response()->json(['message' => 'Successfully logged out']);
     }
