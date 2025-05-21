@@ -9,15 +9,15 @@ return new class extends Migration
     /**
      * Run the migrations.
      */
-    public function up()
+    public function up(): void
     {
         Schema::create('ekskuls', function (Blueprint $table) {
             $table->id();
-            $table->string('nama_ekskul');
-            $table->string('penanggung_jawab');
-            $table->string('cover_gambar');
-            $table->timestamps();
-        });    
+            $table->string('name');    // Nama ekskul
+            $table->string('mentor');  // Nama penanggung jawab / guru
+            $table->string('image')->nullable(); // Path gambar
+            $table->timestamps(); // created_at, updated_at
+        });
     }
 
     /**
@@ -25,6 +25,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('ekskul');
+        Schema::dropIfExists('ekskuls');
     }
 };

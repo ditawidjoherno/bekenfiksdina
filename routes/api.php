@@ -11,7 +11,7 @@ use App\Http\Controllers\EkskulController;
 use App\Http\Controllers\DetailEkskulController;
 use App\Http\Controllers\ActivityController;
 use App\Http\Controllers\EventController;
-
+use App\Http\Controllers\InformasiUmumController;
 
 Route::get('/sanctum/csrf-cookie', [CsrfCookieController::class, 'show']);
 
@@ -60,6 +60,17 @@ Route::middleware('auth:sanctum')->put('/edit-profile', [UserController::class, 
 Route::get('/events', [EventController::class, 'index']);
 Route::post('/events', [EventController::class, 'store']);
 Route::delete('/events/{date}', [EventController::class, 'destroy']);
+
+Route::get('/informasi', [InformasiUmumController::class, 'index']);
+Route::post('/informasi', [InformasiUmumController::class, 'store']);
+Route::put('/informasi/{id}', [InformasiUmumController::class, 'update']);
+Route::delete('/informasi/{id}', [InformasiUmumController::class, 'destroy']);
+
+Route::get('/ekskul', [EkskulController::class, 'index']);
+Route::post('/ekskul', [EkskulController::class, 'store']);
+
+Route::middleware('auth:api')->get('/users', [UserController::class, 'index']);
+
 
 // Route::middleware('auth:api')->get('/user', function (Request $request) {
 //     return $request->user();

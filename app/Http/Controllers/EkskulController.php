@@ -2,38 +2,37 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Ekskul;
+use Illuminate\Support\Facades\Storage;
 
 class EkskulController extends Controller
 {
+    public function index()
+    {
+        return response()->json(Ekskul::all());
+    }
+
     public function store(Request $request)
     {
-        // Validasi input
         $request->validate([
-            'nama_ekskul' => 'required|string|max:255',
-            'penanggung_jawab' => 'required|string|max:255',
-            'cover_gambar' => 'required|file|mimes:jpg,jpeg,png|max:2048',
+            'name'   => 'required|string',
+            'mentor' => 'required|string',
+            'image'  => 'nullable|image|max:2048',
         ]);
-    
-        // Simpan file gambar ke storage/app/public/ekskul
-        if ($request->hasFile('cover_gambar')) {
-            $file = $request->file('cover_gambar');
-            $filename = time() . '_' . $file->getClientOriginalName();
-            $path = $file->storeAs('public/ekskul', $filename);
+
+        $imagePath = null;
+        if ($request->hasFile('image')) {
+            $imagePath = $request->file('image')->store('ekskul_images', 'public');
         }
-    
-        // Simpan data ke database (contoh pakai model Ekskul)
-        $ekskul = new Ekskul();
-        $ekskul->nama_ekskul = $request->nama_ekskul;
-        $ekskul->penanggung_jawab = $request->penanggung_jawab;
-        $ekskul->cover_gambar = $filename ?? null;
-        $ekskul->save();
-    
-        return response()->json([
-            'message' => 'Ekskul berhasil ditambahkan',
-            'data' => $ekskul
-        ], 201);
+
+        $ekskul = Ekskul::create([
+            'name'   => $request->name,
+            'mentor' => $request->mentor,
+            'image'  => $imagePath ? asset('storage/' . $imagePath) : null,
+        ]);
+
+        return response()->json($ekskul, 201);
     }
-    
 }

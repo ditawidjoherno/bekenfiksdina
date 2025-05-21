@@ -167,5 +167,15 @@ public function getAllGuru()
             'data' => $user
         ], 200);
     }
+    public function index(Request $request)
+{
+    $role = $request->query('role');
+    if ($role) {
+        return response()->json(User::where('role', $role)->get());
+    }
+
+    return response()->json(User::all());
+}
+
 
 }
