@@ -104,5 +104,42 @@ public function show($id)
 
     return response()->json(['message' => 'Deskripsi berhasil diperbarui']);
 }
+public function storeAchievement(Request $request, $id)
+{
+    $validated = $request->validate([
+        'date' => 'required|date',
+        'championship' => 'required|string|max:255',
+        'event' => 'required|string|max:255',
+    ]);
+
+    $ekskul = \App\Models\Ekskul::findOrFail($id);
+
+    $achievement = $ekskul->achievements()->create($validated);
+
+    return response()->json([
+        'message' => 'Prestasi berhasil ditambahkan ke ekskul.',
+        'data' => $achievement
+    ]);
+}
+public function getAchievements($id)
+{
+    $ekskul = \App\Models\Ekskul::with('achievements')->find($id);
+
+    if (!$ekskul) {
+        return response()->json(['message' => 'Ekskul tidak ditemukan'], 404);
+    }
+
+    return response()->json($ekskul->achievements);
+}
+public function getByName($name)
+{
+    $ekskul = \App\Models\Ekskul::where('name', $name)->first();
+
+    if (!$ekskul) {
+        return response()->json(['message' => 'Ekskul tidak ditemukan'], 404);
+    }
+
+    return response()->json($ekskul);
+}
 
 }

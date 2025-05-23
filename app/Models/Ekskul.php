@@ -8,4 +8,9 @@ use Illuminate\Database\Eloquent\Model;
 class Ekskul extends Model
 {
     protected $fillable = ['name', 'mentor', 'image', 'description'];
+        // 👇 Tambahkan relasi ini
+    public function achievements()
+    {
+        return $this->hasMany(\App\Models\Achievement::class);
+    }
 }

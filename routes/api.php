@@ -12,6 +12,7 @@ use App\Http\Controllers\DetailEkskulController;
 use App\Http\Controllers\ActivityController;
 use App\Http\Controllers\EventController;
 use App\Http\Controllers\InformasiUmumController;
+use App\Http\Controllers\AchievementController;
 
 Route::get('/sanctum/csrf-cookie', [CsrfCookieController::class, 'show']);
 
@@ -66,6 +67,8 @@ Route::post('/informasi', [InformasiUmumController::class, 'store']);
 Route::put('/informasi/{id}', [InformasiUmumController::class, 'update']);
 Route::delete('/informasi/{id}', [InformasiUmumController::class, 'destroy']);
 
+Route::get('/ekskul/by-name/{name}', [EkskulController::class, 'getByName']);
+
 Route::get('/ekskul', [EkskulController::class, 'index']);
 Route::post('/ekskul', [EkskulController::class, 'store']);
 
@@ -84,6 +87,10 @@ Route::middleware('auth:api')->group(function () {
     Route::put('/ekskul/{id}/description', [EkskulController::class, 'updateDescription']);
 });
 
+Route::post('/ekskul/{id}/achievements', [EkskulController::class, 'storeAchievement']);
+Route::get('/ekskul/{id}/achievements', [EkskulController::class, 'getAchievements']);
+Route::put('/achievements/{id}', [AchievementController::class, 'update']);
+Route::delete('/achievements/{id}', [AchievementController::class, 'destroy']);
 
 Route::middleware('auth:api')->get('/users', [UserController::class, 'index']);
 
