@@ -1,34 +1,19 @@
 <?php
 
 return [
+     'paths' => ['api/*'],
 
-    /*
-    |----------------------------------------------------------------------
-    | Cross-Origin Resource Sharing (CORS) Configuration
-    |----------------------------------------------------------------------
-    |
-    | Configuration for cross-origin resource sharing. You may adjust these
-    | settings as needed.
-    |
-    */
+    'allowed_methods' => ['*'],
 
-    'paths' => ['api/*', 'sanctum/csrf-cookie'],  // Menambahkan paths yang relevan
+    'allowed_origins' => ['http://localhost:3000'],
 
-    'allowed_methods' => ['*'],  // Mengizinkan semua metode HTTP
+    'allowed_origins_patterns' => [],
 
-    'allowed_origins' => [
-        'http://localhost:3000',  // Tambahkan URL frontend kamu di sini
-        // Contoh: 'https://your-frontend-domain.com'
-    ],
+    'allowed_headers' => ['*'],
 
-    'allowed_origins_patterns' => [],  // Bisa biarkan kosong jika tidak perlu
+    'exposed_headers' => [],
 
-    'allowed_headers' => ['*'],  // Mengizinkan semua header
+    'max_age' => 0,
 
-    'exposed_headers' => [],  // Biarkan kosong jika tidak perlu
-
-    'max_age' => 0,  // Tidak perlu diubah
-
-    'supports_credentials' => true,  // Pastikan ini true untuk mendukung cookies (atau kredensial lainnya)
-
+    'supports_credentials' => true,
 ];

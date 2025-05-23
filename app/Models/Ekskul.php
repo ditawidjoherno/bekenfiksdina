@@ -7,5 +7,5 @@ use Illuminate\Database\Eloquent\Model;
 
 class Ekskul extends Model
 {
-    protected $fillable = ['name', 'mentor', 'image'];
+    protected $fillable = ['name', 'mentor', 'image', 'description'];
 }

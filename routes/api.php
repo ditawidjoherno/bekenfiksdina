@@ -69,6 +69,22 @@ Route::delete('/informasi/{id}', [InformasiUmumController::class, 'destroy']);
 Route::get('/ekskul', [EkskulController::class, 'index']);
 Route::post('/ekskul', [EkskulController::class, 'store']);
 
+Route::post('/ekskul/upload-photo', [EkskulController::class, 'uploadPhoto'])->middleware('auth:api');
+
+
+// routes/api.php
+Route::get('/ekskul/{id}', [EkskulController::class, 'show']);
+
+Route::middleware('auth:api')->group(function () {
+    Route::post('/ekskul', [EkskulController::class, 'store']);
+});
+
+Route::middleware('auth:api')->group(function () {
+    Route::get('/ekskul/{id}/description', [EkskulController::class, 'getDescription']);
+    Route::put('/ekskul/{id}/description', [EkskulController::class, 'updateDescription']);
+});
+
+
 Route::middleware('auth:api')->get('/users', [UserController::class, 'index']);
 
 

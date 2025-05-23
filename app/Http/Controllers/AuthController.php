@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 
 
+
 class AuthController extends Controller
 {
     public function register(Request $request)
