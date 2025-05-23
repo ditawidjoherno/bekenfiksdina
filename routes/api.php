@@ -13,6 +13,7 @@ use App\Http\Controllers\ActivityController;
 use App\Http\Controllers\EventController;
 use App\Http\Controllers\InformasiUmumController;
 use App\Http\Controllers\AchievementController;
+use App\Http\Controllers\AnggotaEkskulController;
 
 Route::get('/sanctum/csrf-cookie', [CsrfCookieController::class, 'show']);
 
@@ -93,6 +94,14 @@ Route::put('/achievements/{id}', [AchievementController::class, 'update']);
 Route::delete('/achievements/{id}', [AchievementController::class, 'destroy']);
 
 Route::middleware('auth:api')->get('/users', [UserController::class, 'index']);
+
+Route::prefix('ekskul/{ekskul}/anggota')->group(function () {
+    Route::get('/', [\App\Http\Controllers\AnggotaEkskulController::class, 'index']);
+    Route::post('/', [\App\Http\Controllers\AnggotaEkskulController::class, 'store']);
+});
+Route::get('/anggota-tersedia', [AnggotaEkskulController::class, 'anggotaTersedia']);
+Route::delete('/ekskul/anggota/{id}', [AnggotaEkskulController::class, 'destroy']);
+Route::get('/siswa-tersedia', [AnggotaEkskulController::class, 'siswaTersedia']);
 
 
 // Route::middleware('auth:api')->get('/user', function (Request $request) {
