@@ -13,4 +13,9 @@ class Ekskul extends Model
     {
         return $this->hasMany(\App\Models\Achievement::class);
     }
+    public function informasiEkskul()
+{
+    return $this->hasMany(\App\Models\InformasiEkskul::class);
+}
+
 }
