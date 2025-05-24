@@ -16,6 +16,7 @@ use App\Http\Controllers\AchievementController;
 use App\Http\Controllers\AnggotaEkskulController;
 use App\Http\Controllers\InformasiEkskulController;
 use App\Http\Controllers\EkskulGalleryController;
+use App\Http\Controllers\KegiatanEkskulController;
 
 Route::get('/sanctum/csrf-cookie', [CsrfCookieController::class, 'show']);
 
@@ -113,6 +114,14 @@ Route::delete('/informasi/{id}', [InformasiEkskulController::class, 'destroy']);
 Route::get('/ekskul/{id}/galeri', [EkskulGalleryController::class, 'index']);
 Route::post('/ekskul/{id}/galeri', [EkskulGalleryController::class, 'store']);
 Route::delete('/galeri/{id}', [EkskulGalleryController::class, 'destroy']);
+
+Route::prefix('ekskul/{ekskulId}')->group(function () {
+    Route::get('kegiatan', [KegiatanEkskulController::class, 'index']);
+    Route::post('kegiatan', [KegiatanEkskulController::class, 'store']);
+});
+
+Route::put('/ekskul/{ekskulId}/kegiatan/{id}', [KegiatanEkskulController::class, 'update']);
+Route::delete('kegiatan/{id}', [KegiatanEkskulController::class, 'destroy']);
 
 
 // Route::middleware('auth:api')->get('/user', function (Request $request) {
