@@ -24,7 +24,7 @@ Route::post('addUser', [AuthController::class, 'register']);
 Route::get('/users', [AuthController::class, 'index']);
 Route::post('/login', [AuthController::class, 'login']);
 Route::post('/logout', [AuthController::class, 'logout']);
-Route::middleware('auth:sanctum')->get('user', [UserController::class, 'getUserData']); // User data API
+Route::middleware('jwt.auth')->get('user', [UserController::class, 'getUserData']);
 Route::get('/recent-activity', [ActivityController::class, 'index']);
 Route::prefix('kegiatan')->group(function () {
     // GET /api/kegiatan
@@ -58,9 +58,12 @@ Route::get('/siswa', [UserController::class, 'getAllSiswa']);
 Route::get('/guru', [UserController::class, 'getAllGuru']);
 Route::get('/total-user', [UserController::class, 'getUsersWithTotal']);
 
-Route::middleware('auth:sanctum')->get('/user-profile', [UserController::class, 'getProfile']);
+Route::middleware(['auth:api', 'throttle:200,1'])->get('/user-profile', [UserController::class, 'getProfile']);
+Route::middleware(['auth:api'])->put('/edit-profile', [UserController::class, 'updateProfile']);
+// Di routes/api.php
+Route::middleware('auth:api')->post('/update-password', [UserController::class, 'updatePassword']);
+Route::post('/upload-foto-profil', [UserController::class, 'uploadFoto']);
 
-Route::middleware('auth:sanctum')->put('/edit-profile', [UserController::class, 'updateProfile']);
 
 Route::get('/events', [EventController::class, 'index']);
 Route::post('/events', [EventController::class, 'store']);

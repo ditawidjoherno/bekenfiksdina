@@ -14,20 +14,25 @@ use Illuminate\Support\Facades\Storage;
 class UserController extends Controller
 {
     public function getUserData(Request $request)
-    {
-        // Get the authenticated user
-        $user = Auth::user();
+{
+    $user = Auth::user();
 
-        if ($user) {
-            return response()->json([
-                'user' => $user
-            ], 200);
-        }
-
+    if ($user) {
         return response()->json([
-            'error' => 'User not authenticated'
-        ], 401);
+            'user' => [
+                'id' => $user->id,
+                'nama' => $user->nama,
+                'role' => $user->role,
+                'foto_profil' => $user->foto_profil, // ⬅️ pastikan ini eksplisit
+                // tambahkan field lain jika perlu
+            ]
+        ], 200);
     }
+
+    return response()->json([
+        'error' => 'User not authenticated'
+    ], 401);
+}
     
     public function getUserCounts()
     {
@@ -104,69 +109,86 @@ public function getAllGuru()
     }
 
     public function getProfile(Request $request)
-    {
-        $user = $request->user(); // Ambil user yang sedang login
+{
+    $user = auth('api')->user();
 
-        return response()->json([
-            'status' => 'success',
-            'data' => $user,
-        ], 200);
-    }
+    return response()->json([
+        'status' => 'success',
+        'data' => [
+            'id'          => $user->id,
+            'nama'        => $user->nama,
+            'email'       => $user->email,
+            'role'        => $user->role,
+            'nip'         => $user->nip,
+            'nisn'        => $user->nisn,
+            'kelas'       => $user->kelas,
+            'jenis_kelamin' => $user->jenis_kelamin,
+            'nomor_hp'    => $user->nomor_hp,
+            'agama'       => $user->agama,
+            'foto_profil' => $user->foto_profil, // ✅ WAJIB ADA
+        ]
+    ]);
+}
 
-    public function updateProfile(Request $request)
-    {
-        $user = auth()->user(); // Ambil data user yang sedang login
+public function updateProfile(Request $request)
+{ 
+    $user = auth('api')->user(); 
 
-        // Tentukan validasi yang berbeda untuk setiap field
-        $validator = Validator::make($request->all(), [
-            'nama' => 'sometimes|string|max:255',
-            'email' => 'sometimes|email|unique:users,email,' . $user->id,
-            'foto_profil' => 'sometimes|image|mimes:jpeg,png,jpg,gif|max:2048',
-            'nomor_hp' => 'sometimes|string|max:15',
-            'agama' => 'sometimes|string|max:255',
-            'jenis_kelamin' => 'sometimes|in:L,P',
-        ]);
+    $request->validate([
+        'nama' => 'nullable|string|max:255',
+        'email' => 'nullable|email|unique:users,email,' . $user->id,
+        'foto_profil' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
+        'nomor_hp' => 'nullable|string|max:20',
+        'agama' => 'nullable|string|max:255',
+    ]);
 
-        // Jika validasi gagal
-        if ($validator->fails()) {
-            return response()->json(['error' => $validator->errors()], 400);
-        }
+    if ($request->has('nama')) $user->nama = $request->nama;
+    if ($request->has('email')) $user->email = $request->email;
+    if ($request->has('nomor_hp')) $user->nomor_hp = $request->nomor_hp;
+    if ($request->has('agama')) $user->agama = $request->agama;
 
-        // Update hanya field yang diberikan dalam request
-        if ($request->has('nama')) {
-            $user->nama = $request->nama;
-        }
+    if ($request->hasFile('foto_profil')) {
+    $image = $request->file('foto_profil');
+    \Log::info('✅ File diterima:', ['name' => $image->getClientOriginalName()]);
 
-        if ($request->has('email')) {
-            $user->email = $request->email;
-        }
+    $path = $image->store('profiles', 'public');
+    \Log::info('📦 Path disimpan:', ['path' => $path]);
 
-        if ($request->has('foto_profil')) {
-            $image = $request->file('foto_profil');
-            $path = $image->store('profiles', 'public');
-            $user->foto_profil = $path;
-        }
+    $user->foto_profil = $path; // ⬅️ WAJIB untuk menyimpan ke database
+} else {
 
-        if ($request->has('nomor_hp')) {
-            $user->nomor_hp = $request->nomor_hp;
-        }
+}
 
-        if ($request->has('agama')) {
-            $user->agama = $request->agama;
-        }
 
-        if ($request->has('jenis_kelamin')) {
-            $user->jenis_kelamin = $request->jenis_kelamin;
-        }
+    $user->save();
 
-        // Simpan perubahan
+    return response()->json([
+        'message' => 'Profil berhasil diperbarui',
+        'data' => $user
+    ]);
+}
+
+public function uploadFoto(Request $request)
+{
+    $user = auth('api')->user();
+    \Log::info('📤 uploadFoto dipanggil', ['hasFile' => $request->hasFile('foto_profil')]);
+
+    if ($request->hasFile('foto_profil')) {
+        $image = $request->file('foto_profil');
+        $path = $image->store('profiles', 'public');
+        $user->foto_profil = $path;
         $user->save();
 
         return response()->json([
-            'message' => 'Profil berhasil diperbarui',
+            'message' => 'Foto berhasil diperbarui',
             'data' => $user
-        ], 200);
+        ]);
     }
+
+    return response()->json(['message' => 'Tidak ada file dikirim'], 400);
+}
+
+
     public function index(Request $request)
 {
     $role = $request->query('role');
@@ -177,5 +199,28 @@ public function getAllGuru()
     return response()->json(User::all());
 }
 
+public function updatePassword(Request $request)
+{
+    $user = auth('api')->user();
 
+    $request->validate([
+        'old_password' => 'required',
+        'new_password' => 'required|min:8'
+    ]);
+
+    if (!Hash::check($request->old_password, $user->password)) {
+        return response()->json(['message' => 'Password lama salah'], 400);
+    }
+
+    $user->password = Hash::make($request->new_password);
+    $user->save();
+
+        // ✅ Tambahan simpan password
+    if ($request->has('password')) {
+        $user->password = \Hash::make($request->password);
+    }
+
+
+    return response()->json(['message' => 'Password berhasil diperbarui']);
+}
 }
