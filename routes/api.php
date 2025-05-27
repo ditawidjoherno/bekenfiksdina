@@ -17,6 +17,10 @@ use App\Http\Controllers\AnggotaEkskulController;
 use App\Http\Controllers\InformasiEkskulController;
 use App\Http\Controllers\EkskulGalleryController;
 use App\Http\Controllers\KegiatanEkskulController;
+use App\Http\Controllers\PiketController;
+use App\Http\Controllers\StudyTourController;
+use App\Http\Controllers\PiketCardController;
+
 
 Route::get('/sanctum/csrf-cookie', [CsrfCookieController::class, 'show']);
 
@@ -126,7 +130,29 @@ Route::prefix('ekskul/{ekskulId}')->group(function () {
 Route::put('/ekskul/{ekskulId}/kegiatan/{id}', [KegiatanEkskulController::class, 'update']);
 Route::delete('kegiatan/{id}', [KegiatanEkskulController::class, 'destroy']);
 
+Route::post('/input-absensi', [AbsensiController::class, 'inputAbsensi']); 
 
+Route::get('/jumlah-siswa', [UserController::class, 'siswaGender']);
+Route::get('/jumlah-guru', [UserController::class, 'guruGender']);
+
+Route::get('/siswa-kelas', [AbsensiController::class, 'getStudentsByClass']); 
+
+Route::get('/absensi', [AbsensiController::class, 'getAbsensi']);
+Route::get('/absensi-piket', [PiketController::class, 'getPiket']);
+Route::post('/input-piket', [PiketController::class, 'inputPiket']);              // Simpan absensi
+Route::get('/kontribusi-piket', [PiketController::class, 'rekapKontribusiBulanan']);
+Route::get('/absensi-tour', [StudyTourController::class, 'getStudyTour']);
+Route::post('/input-tour', [StudyTourController::class, 'inputStudyTour']); 
+
+Route::get('/kehadiran-chart', [AbsensiController::class, 'getChartData']);
+Route::get('/statistik-hari-ini', [AbsensiController::class, 'getAbsensiStatistikHariIni']);
+Route::get('/statistik-bulanan', [AbsensiController::class, 'getAbsensiStatistikBulanan']);
+Route::get('/list-absensi-siswa', [AbsensiController::class, 'listAbsensi']);
+Route::get('/detail-siswa', [UserController::class, 'detailSiswa']);
+Route::get('/absensi-detail', [AbsensiController::class, 'getAbsensiByNisn']);
+
+Route::get('/piket-card', [PiketCardController::class, 'getPiketCard']);
+Route::post('/piket-card', [PiketCardController::class, 'store']);
 // Route::middleware('auth:api')->get('/user', function (Request $request) {
 //     return $request->user();
 // });

@@ -5,13 +5,13 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class Absensi extends Model
+class Piket extends Model
 {
     use HasFactory;
 
-    protected $table = 'absensi'; // nama tabel
+    protected $table = 'piket'; // nama tabel
 
-// app/Models/Absensi.php
+// app/Models/Piket.php
 protected $fillable = [
     'user_id', 'kelas', 'hari', 'tanggal', 'mulai', 'selesai', 'status', 'waktu_absen'
 ];

@@ -16,7 +16,7 @@ return new class extends Migration
         $table->date('date'); // format: YYYY-MM-DD
         $table->string('title');
         $table->text('text');
-        $table->string('author');
+        $table->string('author')->nullable();
         $table->string('time'); // bebas format, contoh: "17.30 pm"
         $table->string('color')->nullable(); // ex: bg-yellow-400
         $table->timestamps();

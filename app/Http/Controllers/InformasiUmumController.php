@@ -12,19 +12,22 @@ class InformasiUmumController extends Controller
     }
 
     public function store(Request $request)
-    {
-        $data = $request->validate([
-            'date' => 'required|date',
-            'title' => 'required|string|max:255',
-            'text' => 'required|string',
-            'author' => 'required|string',
-            'time' => 'required|string',
-            'color' => 'nullable|string',
-        ]);
+{
+    \Log::info('📥 Data diterima dari frontend:', $request->all());
 
-        $info = InformasiUmum::create($data);
-        return response()->json($info, 201);
-    }
+    $data = $request->validate([
+        'date' => 'required|date',
+        'title' => 'required|string|max:255',
+        'text' => 'required|string',
+        'author' => 'nullable|string',
+        'time' => 'required|string',
+        'color' => 'nullable|string',
+    ]);
+
+    $info = InformasiUmum::create($data);
+    return response()->json($info, 201);
+}
+
 
     public function update(Request $request, $id)
     {

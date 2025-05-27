@@ -16,41 +16,51 @@ use Illuminate\Support\Facades\Storage;
 class AuthController extends Controller
 {
     public function register(Request $request)
-    {
-        // Validasi input
-        $request->validate([
-            'nama' => 'required|string',
-            'role' => 'required|in:siswa,guru',
-            'nisn' => 'nullable|required_without:nip|unique:users',
-            'nip' => 'nullable|required_without:nisn|unique:users',
-            'kelas' => 'nullable',
-            'jenis_kelamin' => 'nullable|in:L,P',
-            'agama' => 'nullable',
-            'email' => 'required|email|unique:users',
-            'password' => 'required|string|min:8', 
-        ]);
+{
+    // Validasi input
+    $request->validate([
+        'nama' => 'required|string',
+        'role' => 'required|in:siswa,guru',
+        'nisn' => 'nullable|required_without:nip|unique:users',
+        'nip' => 'nullable|required_without:nisn|unique:users',
+        'kelas' => 'nullable',
+        'jenis_kelamin' => 'nullable|in:L,P',
+        'agama' => 'nullable',
+        'email' => 'required|email|unique:users',
+        'password' => 'required|string|min:8',
+        'tanggal_lahir' => 'nullable|date',
+        'nomor_hp' => 'nullable|string|max:15',
+    ]);
 
-        // Simpan user
-        $user = User::create([
-            'nama' => $request->nama,
-            'role' => $request->role,
-            'nisn' => $request->nisn,
-            'nip' => $request->nip,
-            'kelas' => $request->kelas,
-            'jenis_kelamin' => $request->jenis_kelamin,
-            'agama' => $request->agama,
-            'email' => $request->email,
-            'password' => Hash::make($request->password), 
-        ]);
+    // Simpan user
+    $user = User::create([
+        'nama' => $request->nama,
+        'role' => $request->role,
+        'nisn' => $request->nisn,
+        'nip' => $request->nip,
+        'kelas' => $request->kelas,
+        'jenis_kelamin' => $request->jenis_kelamin,
+        'agama' => $request->agama,
+        'email' => $request->email,
+        'password' => Hash::make($request->password),
+        'tanggal_lahir' => $request->tanggal_lahir,
+        'nomor_hp' => $request->nomor_hp,
+    ]);
 
-        return response()->json([
-            'message' => 'User berhasil ditambahkan',
-            'user' => $user
-        ], 201);
-        
+    // Format tanggal lahir
+    $formattedUser = $user->toArray();
+    if ($user->tanggal_lahir) {
+        $formattedUser['tanggal_lahir'] = \Carbon\Carbon::parse($user->tanggal_lahir)->format('d-m-Y');
     }
 
-    public function index()
+    return response()->json([
+        'message' => 'User berhasil ditambahkan',
+        'user' => $formattedUser
+    ], 201);
+}
+
+
+public function index()
     {
         $users = User::all();
         return response()->json($users);
