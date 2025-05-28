@@ -168,8 +168,10 @@ public function getAbsensi(Request $request)
     ]);
 }
 
- public function getChartData()
+ public function getChartData(Request $request)
 {
+    $date = $request->query('date', date('Y-m-d')); // default hari ini
+
     $kelasList = [
         "X-A", "X-B", "X-C",
         "XI-A", "XI-B", "XII-C",
@@ -183,7 +185,7 @@ public function getAbsensi(Request $request)
             ->join('users', 'absensi.user_id', '=', 'users.id')
             ->where('users.kelas', $kelas)
             ->where('users.role', 'siswa')
-            ->whereDate('absensi.tanggal', now()->toDateString())
+            ->whereDate('absensi.tanggal', $date)
             ->where('absensi.status', 'Hadir')
             ->count();
 

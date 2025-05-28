@@ -57,58 +57,78 @@ class UserController extends Controller
 }
 
 public function getAllSiswa()
-    {
-        // Jika menggunakan field 'role' langsung di tabel users
-        $siswa = User::where('role', 'siswa')->get();
+{
+    $siswa = User::where('role', 'siswa')->get()->map(function ($user) {
+        return [
+            'id' => $user->id,
+            'nama' => $user->nama,
+            'nisn' => $user->nisn,
+            'jenis_kelamin' => $user->jenis_kelamin,
+            'kelas' => $user->kelas,
+            'foto_profil' => $user->foto_profil
+                ? asset('storage/' . $user->foto_profil)
+                : asset('images/profilsiswa.jpg'),
+        ];
+    });
 
-        // Jika menggunakan Spatie Laravel Permission
-        // $siswa = User::role('siswa')->get();
+    return response()->json([
+        'status' => 'success',
+        'data' => $siswa
+    ], 200);
+}
 
-        return response()->json([
-            'status' => 'success',
-            'data' => $siswa
-        ], 200);
-    }
 public function getAllGuru()
-    {
-        // Jika menggunakan field 'role' langsung di tabel users
-        $guru = User::where('role', 'guru')->get();
+{
+    $guru = User::where('role', 'guru')->get()->map(function ($user) {
+        return [
+            'id' => $user->id,
+            'nama' => $user->nama,
+            'nip' => $user->nip,
+            'jenis_kelamin' => $user->jenis_kelamin,
+            'kelas' => $user->kelas,
+            'foto_profil' => $user->foto_profil
+                ? asset('storage/' . $user->foto_profil)
+                : asset('images/profilguru.jpg'), // Ganti dengan default foto guru
+        ];
+    });
 
-        // Jika menggunakan Spatie Laravel Permission
-        // $siswa = User::role('siswa')->get();
+    return response()->json([
+        'status' => 'success',
+        'data' => $guru
+    ], 200);
+}
 
-        return response()->json([
-            'status' => 'success',
-            'data' => $guru
-        ], 200);
-    }
     public function getUsersWithTotal()
-    {
-        // Mengambil seluruh data user
-        $users = User::all();
-    
-        // Mengambil jumlah total user
-        $totalUsers = $users->count();
-    
-        // Proses menambahkan data NIP dan NISN sesuai kondisi
-        $usersWithDetails = $users->map(function($user) {
-            return [
-                'id' => $user->id,
-                'name' => $user->nama,
-                'gender' => $user->jenis_kelamin,
-                'class' => $user->kelas,
-                'nip' => $user->nip ? $user->nip : null, // Jika ada NIP, tampilkan, jika tidak tampilkan null
-                'nisn' => $user->nisn ? $user->nisn : null, // Jika ada NISN, tampilkan, jika tidak tampilkan null
-            ];
-        });
-    
-        // Mengembalikan response JSON dengan data user dan total count
-        return response()->json([
-            'status' => 'success',
-            'total_users' => $totalUsers,
-            'data' => $usersWithDetails,
-        ], 200);
-    }
+{
+    // Mengambil seluruh data user
+    $users = User::all();
+
+    // Mengambil jumlah total user
+    $totalUsers = $users->count();
+
+    // Proses menambahkan data NIP, NISN, dan foto profil sesuai kondisi
+    $usersWithDetails = $users->map(function($user) {
+        return [
+            'id' => $user->id,
+            'name' => $user->nama,
+            'gender' => $user->jenis_kelamin,
+            'class' => $user->kelas,
+            'nip' => $user->nip ? $user->nip : null,
+            'nisn' => $user->nisn ? $user->nisn : null,
+            'foto_profil' => $user->foto_profil
+                ? asset('storage/' . $user->foto_profil)
+                : asset('images/profilsiswa.jpg'),  // fallback foto default jika foto kosong
+        ];
+    });
+
+    // Mengembalikan response JSON dengan data user dan total count
+    return response()->json([
+        'status' => 'success',
+        'total_users' => $totalUsers,
+        'data' => $usersWithDetails,
+    ], 200);
+}
+
 
     public function getProfile(Request $request)
 {
@@ -161,13 +181,21 @@ public function updateProfile(Request $request)
 
 }
 
-
     $user->save();
 
-    return response()->json([
-        'message' => 'Profil berhasil diperbarui',
-        'data' => $user
-    ]);
+// Tambahkan aktivitas
+UserActivity::create([
+    'user_id' => $user->id,
+    'action' => 'update profile',
+    'description' => 'User updated their profile information',
+]);
+
+return response()->json([
+    'message' => 'Profil berhasil diperbarui',
+    'data' => $user
+]);
+
+
 }
 
 public function uploadFoto(Request $request)

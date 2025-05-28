@@ -8,25 +8,24 @@ use Illuminate\Support\Carbon;
 class PiketCardController extends Controller
 {
     public function getPiketCard()
-    {
-        $today = Carbon::today()->toDateString();
+{
+    $card = PiketCard::latest('tanggal')->first(); // ⬅️ ambil yang terbaru berdasarkan tanggal
 
-        $card = PiketCard::latest('tanggal')->first();
-
-        if (!$card) {
-            return response()->json([
-                'kelas' => '-',
-                'tanggal' => Carbon::now()->translatedFormat('d M, Y'),
-                'image_url' => asset('images/piketcard.png'),
-            ]);
-        }
-
+    if (!$card) {
         return response()->json([
-            'kelas' => $card->kelas,
-            'tanggal' => Carbon::parse($card->tanggal)->translatedFormat('d M, Y'),
+            'kelas' => '-',
+            'tanggal' => null,
             'image_url' => asset('images/piketcard.png'),
         ]);
     }
+
+    return response()->json([
+        'kelas' => $card->kelas,
+        'tanggal' => $card->tanggal, // ⬅️ jangan pakai formatted string
+        'image_url' => asset('images/piketcard.png'),
+    ]);
+}
+
     public function store(Request $request)
 {
     $validated = $request->validate([
