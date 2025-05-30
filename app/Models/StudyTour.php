@@ -16,6 +16,7 @@ class StudyTour extends Model
         'kelas',
         'hari',
         'tanggal',
+        'title', // ✅ Tambahkan baris ini
         'mulai',
         'selesai',
         'status',
@@ -25,13 +26,11 @@ class StudyTour extends Model
         'biaya'
     ];
 
-    // Hanya kolom tanggal/timestamp yang benar-benar tipe date/datetime di sini
     protected $dates = [
         'tanggal',
         'tanggal_daftar',
     ];
 
-    // Relasi ke user
     public function user()
     {
         return $this->belongsTo(User::class, 'user_id');

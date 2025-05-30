@@ -12,11 +12,12 @@ class InformasiUmum extends Model
     protected $table = 'informasi_umum';
 
     protected $fillable = [
-        'date',
-        'title',
-        'text',
-        'author',
-        'time',
-        'color',
-    ];
+    'date',
+    'title',
+    'text',
+    'author',
+    'photo', // ✅ Tambahkan ini
+    'time',
+    'color',
+];
 }

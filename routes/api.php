@@ -144,6 +144,10 @@ Route::post('/input-piket', [PiketController::class, 'inputPiket']);            
 Route::get('/kontribusi-piket', [PiketController::class, 'rekapKontribusiBulanan']);
 Route::get('/absensi-tour', [StudyTourController::class, 'getStudyTour']);
 Route::post('/input-tour', [StudyTourController::class, 'inputStudyTour']); 
+Route::post('/studytour', [StudyTourController::class, 'inputStudyTour']);
+Route::post('/studytour-info', [StudyTourController::class, 'storeInfo']);
+Route::get('/studytour-info', [StudyTourController::class, 'getInfo']);
+
 
 Route::get('/kehadiran-chart', [AbsensiController::class, 'getChartData']);
 Route::get('/statistik-hari-ini', [AbsensiController::class, 'getAbsensiStatistikHariIni']);

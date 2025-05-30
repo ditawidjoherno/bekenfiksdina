@@ -16,13 +16,15 @@ class InformasiUmumController extends Controller
     \Log::info('📥 Data diterima dari frontend:', $request->all());
 
     $data = $request->validate([
-        'date' => 'required|date',
-        'title' => 'required|string|max:255',
-        'text' => 'required|string',
-        'author' => 'nullable|string',
-        'time' => 'required|string',
-        'color' => 'nullable|string',
-    ]);
+    'date' => 'required|date',
+    'title' => 'required|string|max:255',
+    'text' => 'required|string',
+    'author' => 'nullable|string',
+    'photo' => 'nullable|string', // ✅ tambahkan ini
+    'time' => 'required|string',
+    'color' => 'nullable|string',
+]);
+
 
     $info = InformasiUmum::create($data);
     return response()->json($info, 201);
