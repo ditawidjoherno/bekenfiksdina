@@ -17,7 +17,6 @@ class StudyTour extends Model
         'hari',
         'tanggal',
         'title', // ✅ Tambahkan baris ini
-        'mulai',
         'selesai',
         'status',
         'tanggal_daftar',

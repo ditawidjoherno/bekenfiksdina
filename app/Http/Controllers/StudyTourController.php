@@ -93,7 +93,7 @@ class StudyTourController extends Controller
             'tanggal' => 'required|date',
             'hari' => 'required|string',
             'mulai' => 'required|string',
-            'selesai' => 'required|string',
+            'selesai' => 'required|date',
             'tujuan' => 'required|string',
             'biaya' => 'required|integer',
             'title' => 'nullable|string',
@@ -190,6 +190,42 @@ public function getInfo(Request $request)
 {
     $data = StudyTour::latest()->first(); // atau where kelas = '7A' jika ingin spesifik
     return response()->json($data);
+}
+public function listTour()
+{
+    $tours = StudyTour::with('user')->orderBy('tanggal', 'desc')->get();
+
+    $grouped = $tours->groupBy(function ($item) {
+        return $item->kelas . '-' . $item->tanggal;
+    });
+
+    $result = $grouped->map(function ($items, $key) {
+        $first = $items->first();
+        return [
+            'kelas' => $first->kelas,
+            'tanggal' => $first->tanggal,
+            'hari' => $first->hari,
+            'mulai' => $first->mulai,
+            'selesai' => $first->selesai,
+            'tujuan' => $first->tujuan,
+            'biaya' => $first->biaya,
+            'title' => $first->title,
+            'siswa' => $items->map(function ($item) {
+                return [
+                    'nama' => $item->user->nama,
+                    'nisn' => $item->user->nisn,
+                    'status' => $item->status,
+                    'waktu_daftar' => $item->waktu_daftar,
+                    'tanggal_daftar' => $item->tanggal_daftar,
+                ];
+            }),
+        ];
+    })->values();
+
+    return response()->json([
+        'message' => 'List Study Tour berhasil diambil',
+        'data' => $result
+    ]);
 }
 
 }
