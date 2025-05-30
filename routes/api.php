@@ -20,6 +20,7 @@ use App\Http\Controllers\KegiatanEkskulController;
 use App\Http\Controllers\PiketController;
 use App\Http\Controllers\StudyTourController;
 use App\Http\Controllers\PiketCardController;
+use App\Http\Controllers\AbsensiEkskulController;
 
 
 Route::get('/sanctum/csrf-cookie', [CsrfCookieController::class, 'show']);
@@ -153,6 +154,10 @@ Route::get('/absensi-detail', [AbsensiController::class, 'getAbsensiByNisn']);
 
 Route::get('/piket-card', [PiketCardController::class, 'getPiketCard']);
 Route::post('/piket-card', [PiketCardController::class, 'store']);
+
+Route::get('/absensi-ekskul', [AbsensiEkskulController::class, 'index']);
+Route::get('/absensi-ekskul/header', [AbsensiEkskulController::class, 'getAbsensiHeader']);
+Route::post('/absensi-ekskul', [AbsensiEkskulController::class, 'store']);
 // Route::middleware('auth:api')->get('/user', function (Request $request) {
 //     return $request->user();
 // });
