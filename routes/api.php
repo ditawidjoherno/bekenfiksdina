@@ -119,7 +119,7 @@ Route::post('/events', [EventController::class, 'store']);
 Route::delete('/events/{date}', [EventController::class, 'destroy']);
 
 Route::get('/informasi', [InformasiUmumController::class, 'index']);
-Route::post('/informasi', [InformasiUmumController::class, 'store']);
+Route::middleware('auth:api')->post('/informasi', [InformasiUmumController::class, 'store']);
 Route::put('/informasi/{id}', [InformasiUmumController::class, 'update']);
 Route::delete('/informasi/{id}', [InformasiUmumController::class, 'destroy']);
 
@@ -261,3 +261,5 @@ Route::get('/karya-wisata-riwayat', [InfoKaryaWisataController::class, 'list']);
 Route::get('/karya-wisata-info/current-title', [InfoKaryaWisataController::class, 'latest']);
 Route::get('/karya-wisata/partisipasi', [InfoKaryaWisataController::class, 'getPesertaByJudulTanggal']);
 Route::get('/karya-wisata/galeri', [InfoKaryaWisataController::class, 'getGaleriByJudulTanggal']);
+
+Route::middleware('auth:api')->get('/absensi-anak', [AbsensiController::class, 'absensiAnak']);

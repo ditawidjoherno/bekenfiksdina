@@ -67,5 +67,10 @@ public function orangtua()
     return $this->belongsTo(User::class, 'orangtua_id');
 }
 
+public function informasi()
+{
+    return $this->hasMany(InformasiUmum::class);
+}
+
 
 }

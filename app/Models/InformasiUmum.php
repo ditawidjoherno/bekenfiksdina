@@ -19,6 +19,7 @@ class InformasiUmum extends Model
     'photo', // ✅ Tambahkan ini
     'time',
     'color',
+    'user_id',
 ];
 public function user()
 {
