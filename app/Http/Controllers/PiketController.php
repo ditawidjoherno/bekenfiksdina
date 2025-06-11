@@ -169,5 +169,61 @@ class PiketController extends Controller
             'data' => $rekap
         ]);
     }
-    
+public function piketSaya(Request $request)
+{
+    $user = auth()->user();
+
+    if (!$user) {
+        return response()->json([
+            'error' => 'User tidak terautentikasi',
+        ], 401);
+    }
+
+    $bulan = $request->query('bulan', now()->month);
+    $tahun = $request->query('tahun', now()->year);
+
+    $piket = Piket::where('user_id', $user->id)
+        ->whereMonth('tanggal', $bulan)
+        ->whereYear('tanggal', $tahun)
+        ->orderBy('tanggal', 'asc')
+        ->get();
+
+    $data = $piket->map(function ($item) {
+        return [
+            'tanggal' => \Carbon\Carbon::parse($item->tanggal)->translatedFormat('l, d F Y'),
+            'status' => $item->status,
+            'waktu' => $item->waktu_absen,
+        ];
+    });
+
+    return response()->json($data);
+}
+public function riwayatByNISN($nisn, Request $request)
+{
+    $user = User::where('nisn', $nisn)->first();
+
+    if (!$user) {
+        return response()->json([], 404);
+    }
+
+    $bulan = $request->query('bulan', now()->month);
+    $tahun = $request->query('tahun', now()->year);
+
+    $piket = Piket::where('user_id', $user->id)
+        ->whereMonth('tanggal', $bulan)
+        ->whereYear('tanggal', $tahun)
+        ->orderBy('tanggal', 'asc')
+        ->get();
+
+    $data = $piket->map(function ($item) {
+        return [
+            'tanggal' => \Carbon\Carbon::parse($item->tanggal)->translatedFormat('l, d F Y'),
+            'status' => $item->status,
+            'waktu' => $item->waktu_absen,
+        ];
+    });
+
+    return response()->json($data);
+}
+
 }

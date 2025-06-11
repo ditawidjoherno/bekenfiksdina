@@ -24,31 +24,46 @@ class AnggotaEkskulController extends Controller
         'nisn' => 'nullable|string|max:20',
     ]);
 
-    // 🔒 Cek apakah anggota dengan kombinasi ini sudah ada
-    $exists = AnggotaEkskul::where([
-        'nama' => $validated['nama'],
-        'kelas' => $validated['kelas'],
-        'nisn' => $validated['nisn'],
+    // Cari user berdasarkan nama dan kelas
+    $user = \App\Models\User::where('nama', $validated['nama'])
+                ->where('kelas', $validated['kelas'])
+                ->first();
+
+    // Jika user tidak ditemukan, kirim error
+    if (!$user) {
+        return response()->json([
+            'message' => 'User dengan nama dan kelas ini tidak ditemukan di tabel users.'
+        ], 404);
+    }
+
+    // Cek apakah anggota dengan kombinasi ini sudah ada
+    $exists = \App\Models\AnggotaEkskul::where([
+        'user_id' => $user->id,
         'ekskul_id' => $ekskulId,
     ])->exists();
 
     if ($exists) {
         return response()->json([
-            'message' => 'Anggota dengan data ini sudah ada!'
-        ], 409); // HTTP 409 Conflict
+            'message' => 'Anggota ini sudah terdaftar dalam ekskul tersebut.'
+        ], 409);
     }
 
-    // ✅ Buat anggota baru jika tidak duplikat
-    $anggota = AnggotaEkskul::create([
+    // Simpan data anggota ekskul
+    $anggota = \App\Models\AnggotaEkskul::create([
         'nama' => $validated['nama'],
         'kelas' => $validated['kelas'],
         'nisn' => $validated['nisn'],
         'status' => 'green',
         'ekskul_id' => $ekskulId,
+        'user_id' => $user->id,
     ]);
 
-    return response()->json($anggota, 201);
+    return response()->json([
+        'message' => 'Anggota berhasil ditambahkan.',
+        'data' => $anggota
+    ], 201);
 }
+
 
     public function anggotaTersedia()
 {
@@ -82,5 +97,24 @@ public function siswaTersedia()
     ]);
 }
 
+public function ekskulSaya(Request $request)
+{
+    $user = auth()->user();
+
+    $anggota = \App\Models\AnggotaEkskul::with('ekskul')
+        ->where('user_id', $user->id)
+        ->get();
+
+    $data = $anggota->map(function ($item) {
+        return [
+            'id' => $item->ekskul->id,
+            'name' => $item->ekskul->name,
+            'mentor' => $item->ekskul->mentor,
+            'image' => $item->ekskul->image,
+        ];
+    });
+
+    return response()->json($data);
+}
 
 }

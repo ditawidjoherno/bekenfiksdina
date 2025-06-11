@@ -58,16 +58,16 @@ class AbsensiEkskulController extends Controller
 
     // ✅ SIMPAN ABSENSI BARU
     foreach ($validated['absensi'] as $item) {
-        AbsensiEkskul::create([
-            'ekskul_id' => $validated['ekskul_id'],
-            'tanggal' => $validated['tanggal'],
-            'anggota_id' => $item['anggota_id'],
-            'status' => $item['status'],
-            'waktu_edit' => isset($item['waktu_absen'])
-    ? date('H:i:s', strtotime($item['waktu_absen']))
-    : now()->format('H:i:s'),
-        ]);
-    }
+    AbsensiEkskul::create([
+        'ekskul_id' => $validated['ekskul_id'],
+        'tanggal' => $validated['tanggal'],
+        'anggota_id' => $item['anggota_id'],
+        'status' => $item['status'],
+        'waktu_absen' => isset($item['waktu_absen'])
+            ? date('H:i:s', strtotime($item['waktu_absen']))
+            : now()->format('H:i:s'),
+    ]);
+}
 
     return response()->json(['message' => 'Absensi berhasil disimpan']);
 }
@@ -128,6 +128,41 @@ public function getAbsensiHeader(Request $request)
         'selesai'  => $header?->selesai ?? '-',
         'absensi'  => $absensi
     ]);
+}
+
+public function rekapPerTanggal(Request $request)
+{
+    try {
+        $ekskulId = $request->query('ekskul_id');
+        $tanggal = $request->query('tanggal');
+
+        if (!$ekskulId || !$tanggal) {
+            return response()->json(['message' => 'Parameter tidak lengkap'], 400);
+        }
+
+        $rekap = \App\Models\AbsensiEkskul::where('ekskul_id', $ekskulId)
+    ->where('tanggal', $tanggal)
+    ->select(
+        'status',
+        DB::raw('count(*) as jumlah')
+    )
+    ->groupBy('status')
+    ->get();
+
+        // Jangan gunakan groupBy Laravel Collection
+        return response()->json([
+            'status' => 'success',
+            'data' => $rekap
+        ]);
+
+    } catch (\Throwable $e) {
+        return response()->json([
+            'status' => 'error',
+            'message' => 'Gagal rekap',
+            'error' => $e->getMessage(),
+            'line' => $e->getLine(),
+        ], 500);
+    }
 }
 
 }

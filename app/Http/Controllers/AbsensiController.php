@@ -417,4 +417,147 @@ public function getAbsensiByNisn(Request $request)
     ]);
 }
 
+public function hariIni(Request $request)
+{
+    $tanggal = $request->query('tanggal');
+    $nisn = $request->query('nisn');
+
+    if ($nisn) {
+        $user = User::where('nisn', $nisn)->first();
+        if (!$user) {
+            return response()->json([
+                'status' => null,
+                'message' => 'User dengan NISN tidak ditemukan',
+            ]);
+        }
+
+        $user_id = $user->id;
+    } else {
+        $user_id = auth()->id(); // default untuk siswa login
+    }
+
+    $absensi = \App\Models\Absensi::where('user_id', $user_id)
+        ->whereDate('tanggal', $tanggal)
+        ->first();
+
+    if (!$absensi) {
+        return response()->json([
+            'status' => null,
+            'message' => 'Absensi belum tersedia',
+        ]);
+    }
+
+    return response()->json([
+        'status' => $absensi->status,
+        'message' => 'Berhasil',
+    ]);
+}
+
+public function getAbsensiBulananByLoginUser(Request $request)
+{
+    try {
+        $user = auth()->user();
+
+        if (!$user) {
+            return response()->json([
+                'error' => 'User tidak terautentikasi',
+            ], 401);
+        }
+
+        $bulan = $request->query('bulan');
+        $tahun = $request->query('tahun');
+
+        if (!$bulan || !$tahun) {
+            return response()->json([
+                'error' => 'Parameter bulan dan tahun wajib diisi.'
+            ], 422);
+        }
+
+        $absensi = Absensi::where('user_id', $user->id)
+            ->whereMonth('tanggal', $bulan)
+            ->whereYear('tanggal', $tahun)
+            ->get();
+
+        $total = $absensi->count();
+
+        $hadir = $absensi->where('status', 'Hadir')->count();
+        $tidakHadir = $absensi->where('status', 'Tidak Hadir')->count();
+        $terlambat = $absensi->where('status', 'Terlambat')->count();
+
+        return response()->json([
+            'hadir' => $total > 0 ? round(($hadir / $total) * 100) : 0,
+            'tidak_hadir' => $total > 0 ? round(($tidakHadir / $total) * 100) : 0,
+            'terlambat' => $total > 0 ? round(($terlambat / $total) * 100) : 0,
+            'total_hari' => $total,
+        ]);
+    } catch (\Throwable $e) {
+        return response()->json([
+            'error' => $e->getMessage(),
+            'line' => $e->getLine(),
+        ], 500);
+    }
+}
+
+public function byUser(Request $request)
+{
+    $userId = $request->query('user_id');
+    $bulan = $request->query('bulan');
+    $tahun = $request->query('tahun');
+
+    $absensi = \App\Models\Absensi::where('user_id', $userId)
+        ->whereMonth('tanggal', $bulan)
+        ->whereYear('tanggal', $tahun)
+        ->orderBy('tanggal')
+        ->get()
+        ->map(function ($item) {
+            return [
+                'hari' => Carbon::parse($item->tanggal)->translatedFormat('l'), // ➕ Nama hari
+                'tanggal' => $item->tanggal,                                    // ➕ Tanggal
+                'status' => $item->status,
+                'waktu_absen' => $item->waktu_absen,                            // ➕ Waktu
+            ];
+        });
+
+    return response()->json(['absensi' => $absensi]);
+}
+public function absensiHariIniByKelas(Request $request)
+{
+    $kelas = $request->query('kelas');
+    $tanggal = now()->toDateString();
+
+    $absensi = Absensi::with('user')
+        ->where('kelas', $kelas)
+        ->where('tanggal', $tanggal)
+        ->get();
+
+    if ($absensi->isEmpty()) {
+        return response()->json([
+            'data' => [],
+            'hari' => '-',
+            'mulai' => '-',
+            'selesai' => '-',
+            'last_edit' => null,
+        ]);
+    }
+
+    $first = $absensi->first();
+
+    $data = $absensi->map(function ($item) {
+        return [
+            'id' => $item->user->id ?? null,
+            'nama' => $item->user->nama ?? '-',
+            'status' => $item->status ?? '-',
+            'waktu' => $item->waktu_absen ?? '-',
+        ];
+    });
+
+    return response()->json([
+        'data' => $data,
+        'hari' => $first->hari,
+        'mulai' => $first->mulai,
+        'selesai' => $first->selesai,
+        'last_edit' => $first->updated_at->format('d F Y - H:i'),
+    ]);
+}
+
 }

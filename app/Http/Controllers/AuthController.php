@@ -30,9 +30,22 @@ class AuthController extends Controller
         'password' => 'required|string|min:8',
         'tanggal_lahir' => 'nullable|date',
         'nomor_hp' => 'nullable|string|max:15',
+    ], [
+        'nama.required' => 'Semua kolom wajib diisi.',
+        'role.required' => 'Role wajib dipilih.',
+        'role.in' => 'Role harus berupa siswa atau guru.',
+        'nisn.required_without' => 'NISN harus diisi jika NIP kosong.',
+        'nip.required_without' => 'NIP harus diisi jika NISN kosong.',
+        'nisn.unique' => 'NISN sudah terdaftar.',
+        'nip.unique' => 'NIP sudah terdaftar.',
+        'email.required' => 'Email wajib diisi.',
+        'email.email' => 'Format email tidak valid.',
+        'email.unique' => 'Email sudah digunakan.',
+        'password.required' => 'Password wajib diisi.',
+        'password.min' => 'Password minimal terdiri dari 8 karakter.',
     ]);
 
-    // Simpan user
+    // Simpan user (siswa atau guru)
     $user = User::create([
         'nama' => $request->nama,
         'role' => $request->role,
@@ -47,7 +60,23 @@ class AuthController extends Controller
         'nomor_hp' => $request->nomor_hp,
     ]);
 
-    // Format tanggal lahir
+    // ✅ Tambahkan otomatis akun orangtua jika role = siswa
+    if ($request->role === 'siswa') {
+        // Cek apakah sudah ada akun orangtua agar tidak duplikat
+        $ortuNisn = 'OT_' . $request->nisn;
+        if (!User::where('nisn', $ortuNisn)->exists()) {
+            User::create([
+                'nama' => 'Orangtua ' . $request->nama,
+                'role' => 'orangtua',
+                'nisn' => $ortuNisn,
+                'anak_nisn' => $request->nisn,
+                'email' => 'ortu.' . $request->email, // pastikan tidak duplicate
+                'password' => bcrypt($request->tanggal_lahir), // pakai tgl lahir siswa
+            ]);
+        }
+    }
+
+    // Format tanggal lahir (untuk respons frontend)
     $formattedUser = $user->toArray();
     if ($user->tanggal_lahir) {
         $formattedUser['tanggal_lahir'] = \Carbon\Carbon::parse($user->tanggal_lahir)->format('d-m-Y');
@@ -70,12 +99,17 @@ public function login(Request $request)
 {
     try {
         $request->validate([
-            'identifier' => 'required|string',
-            'password' => 'required|string',
-        ]);
+    'identifier' => 'required|string',
+    'password' => 'required|string',
+], [
+    'identifier.required' => 'NIP, NISN, atau email harus diisi.',
+    'password.required' => 'Password tidak boleh kosong.',
+]);
+
 
         $user = User::where('nisn', $request->identifier)
                     ->orWhere('nip', $request->identifier)
+                    ->orWhere('email', $request->identifier)
                     ->first();
 
         if (!$user) {

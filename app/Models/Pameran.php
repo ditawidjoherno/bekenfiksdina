@@ -5,11 +5,11 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class StudyTour extends Model
+class Pameran extends Model
 {
     use HasFactory;
 
-    protected $table = 'study_tour';
+    protected $table = 'pameran';
 
     protected $fillable = [
         'user_id',
@@ -37,4 +37,6 @@ class StudyTour extends Model
     {
         return $this->belongsTo(User::class, 'user_id');
     }
+    
+
 }

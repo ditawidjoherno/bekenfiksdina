@@ -20,4 +20,9 @@ class InformasiUmum extends Model
     'time',
     'color',
 ];
+public function user()
+{
+    return $this->belongsTo(User::class);
+}
+
 }

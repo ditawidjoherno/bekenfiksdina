@@ -27,6 +27,7 @@ class UserController extends Controller
                 'id' => $user->id,
                 'nama' => $user->nama,
                 'role' => $user->role,
+                 'kelas' => $user->kelas,
                 'foto_profil' => $user->foto_profil, // ⬅️ pastikan ini eksplisit
                 // tambahkan field lain jika perlu
             ]
@@ -67,6 +68,10 @@ public function getAllSiswa()
             'nisn' => $user->nisn,
             'jenis_kelamin' => $user->jenis_kelamin,
             'kelas' => $user->kelas,
+            'tanggal_lahir' => $user->tanggal_lahir,
+            'agama' => $user->agama,
+            'nomor_hp' => $user->nomor_hp,
+            'email' => $user->email,
             'foto_profil' => $user->foto_profil
                 ? asset('storage/' . $user->foto_profil)
                 : asset('images/profilsiswa.jpg'),
@@ -88,9 +93,13 @@ public function getAllGuru()
             'nip' => $user->nip,
             'jenis_kelamin' => $user->jenis_kelamin,
             'kelas' => $user->kelas,
+            'tanggal_lahir' => $user->tanggal_lahir,
+            'nomor_hp' => $user->nomor_hp,
+            'agama' => $user->agama,
+            'email' => $user->email,
             'foto_profil' => $user->foto_profil
                 ? asset('storage/' . $user->foto_profil)
-                : asset('images/profilguru.jpg'), // Ganti dengan default foto guru
+                : asset('images/profilguru.jpg'),
         ];
     });
 
@@ -99,6 +108,7 @@ public function getAllGuru()
         'data' => $guru
     ], 200);
 }
+
 
     public function getUsersWithTotal()
 {
@@ -172,31 +182,32 @@ public function updateProfile(Request $request)
     if ($request->has('agama')) $user->agama = $request->agama;
 
     if ($request->hasFile('foto_profil')) {
-    $image = $request->file('foto_profil');
-    \Log::info('✅ File diterima:', ['name' => $image->getClientOriginalName()]);
+        $image = $request->file('foto_profil');
+        \Log::info('✅ File diterima:', ['name' => $image->getClientOriginalName()]);
 
-    $path = $image->store('profiles', 'public');
-    \Log::info('📦 Path disimpan:', ['path' => $path]);
+        $path = $image->store('profiles', 'public');
+        \Log::info('📦 Path disimpan:', ['path' => $path]);
 
-    $user->foto_profil = $path; // ⬅️ WAJIB untuk menyimpan ke database
-} else {
-
-}
+        $user->foto_profil = $path;
+    }
 
     $user->save();
 
-// Tambahkan aktivitas
-UserActivity::create([
-    'user_id' => $user->id,
-    'action' => 'update profile',
-    'description' => 'User updated their profile information',
-]);
+    // Tambahkan aktivitas (dengan try-catch agar tidak menyebabkan error)
+    try {
+        \App\Models\UserActivity::create([
+            'user_id' => $user->id,
+            'action' => 'update profile',
+            'description' => 'User updated their profile information',
+        ]);
+    } catch (\Exception $e) {
+        \Log::error("❌ Gagal simpan log aktivitas: " . $e->getMessage());
+    }
 
-return response()->json([
-    'message' => 'Profil berhasil diperbarui',
-    'data' => $user
-]);
-
+    return response()->json([
+        'message' => 'Profil berhasil diperbarui',
+        'data' => $user
+    ]);
 
 }
 
@@ -318,6 +329,200 @@ public function siswaGender()
             'tidak_hadir' => $tidakHadir,
         ]
     ]);
+}
+public function store(Request $request)
+{
+    $validator = Validator::make($request->all(), [
+        'nama' => 'required|string|max:255',
+        'email' => 'required|email|unique:users,email',
+        'password' => 'required|string|min:6',
+        'role' => ['required', Rule::in(['admin', 'guru', 'siswa'])],
+        'nip' => 'nullable|unique:users,nip',
+        'nisn' => 'nullable|unique:users,nisn',
+        'kelas' => 'nullable|string|max:255',
+        'jenis_kelamin' => 'required|in:L,P',
+        'agama' => 'required|string|max:255',
+        'tanggal_lahir' => 'nullable|date',
+        'nomor_hp' => 'nullable|string|max:20',
+    ]);
+
+    if ($validator->fails()) {
+        return response()->json([
+            'message' => 'Validasi gagal',
+            'errors' => $validator->errors(),
+        ], 422);
+    }
+
+    $user = User::create([
+        'nama' => $request->nama,
+        'email' => $request->email,
+        'password' => Hash::make($request->password),
+        'role' => $request->role,
+        'nip' => $request->nip,
+        'nisn' => $request->nisn,
+        'kelas' => $request->kelas,
+        'jenis_kelamin' => $request->jenis_kelamin,
+        'agama' => $request->agama,
+        'tanggal_lahir' => $request->tanggal_lahir,
+        'nomor_hp' => $request->nomor_hp,
+    ]);
+
+    return response()->json([
+        'message' => 'User berhasil dibuat',
+        'data' => $user
+    ], 201);
+}
+public function getWaliKelas(Request $request)
+{
+    $kelas = $request->query('kelas');
+
+    $guru = User::where('role', 'guru')->where('kelas', $kelas)->first();
+
+    return response()->json([
+        'nama' => $guru ? $guru->nama : '-'
+    ]);
+}
+public function storeOrangtua(Request $request)
+{
+    $request->validate([
+        'nama' => 'required|string',
+        'email' => 'required|email|unique:users',
+        'anak_nisn' => 'required|exists:users,nisn',
+    ]);
+
+    $tanggalLahirAnak = User::where('nisn', $request->anak_nisn)->first()->tanggal_lahir;
+
+    User::create([
+        'nama' => $request->nama,
+        'role' => 'orangtua',
+        'nisn' => 'OT_' . $request->anak_nisn,
+        'anak_nisn' => $request->anak_nisn,
+        'email' => $request->email,
+        'password' => bcrypt($tanggalLahirAnak), // atau format ddmmyyyy jika mau
+    ]);
+
+    return redirect()->back()->with('success', 'Akun orangtua berhasil dibuat');
+}
+public function getAnak()
+{
+    $user = auth()->user();
+
+    if ($user->role !== 'orangtua') {
+        return response()->json(['error' => 'Unauthorized'], 403);
+    }
+
+    $anak = $user->anak;
+
+    return response()->json([
+        'nama_orangtua' => $user->nama,
+        'anak' => [
+            'nama' => $anak?->nama,
+            'kelas' => $anak?->kelas,
+            'tanggal_lahir' => $anak?->tanggal_lahir,
+        ]
+    ]);
+}
+
+public function update(Request $request, $id)
+{
+    $user = User::findOrFail($id);
+
+    $request->validate([
+        'nama' => 'nullable|string|max:255',
+        'email' => 'nullable|email|unique:users,email,' . $id,
+        'nomor_hp' => 'nullable|string|max:20',
+        'agama' => 'nullable|string|max:255',
+        'kelas' => 'nullable|string|max:100',
+        'tanggal_lahir' => 'nullable|date',
+        'jenis_kelamin' => 'nullable|in:L,P',
+        'password' => 'nullable|string|min:8' // ✅ tambahkan validasi password
+    ]);
+
+    // Isi field yang bisa diisi
+    $user->fill($request->only([
+        'nama', 'email', 'nomor_hp', 'agama', 'kelas', 'tanggal_lahir', 'jenis_kelamin'
+    ]));
+
+    // ✅ Hash dan simpan password jika ada
+    if ($request->filled('password')) {
+        $user->password = Hash::make($request->password);
+    }
+
+    $user->save();
+
+    return response()->json([
+        'message' => 'Data pengguna berhasil diperbarui',
+        'data' => $user
+    ]);
+}
+
+public function getAllKelas()
+{
+    $kelasList = User::whereNotNull('kelas')
+        ->where('kelas', '!=', '')
+        ->select('kelas')
+        ->distinct()
+        ->orderBy('kelas')
+        ->pluck('kelas');
+
+    return response()->json([
+        'kelas' => $kelasList
+    ]);
+}
+public function getAllJabatan()
+{
+    $jabatanList = User::whereNotNull('kelas') // Ubah 'kelas' menjadi 'jabatan' jika sudah ada kolomnya
+        ->where('role', 'guru')
+        ->where('kelas', '!=', '')
+        ->select('kelas') // ubah ke 'jabatan' jika sudah tersedia
+        ->distinct()
+        ->orderBy('kelas') // atau 'jabatan'
+        ->pluck('kelas');  // atau 'jabatan'
+
+    return response()->json([
+        'jabatan' => $jabatanList
+    ]);
+}
+public function destroy($id)
+{
+    try {
+        $user = User::findOrFail($id);
+
+        // Opsional: hapus foto jika ada
+        if ($user->foto_profil && \Storage::disk('public')->exists($user->foto_profil)) {
+            \Storage::disk('public')->delete($user->foto_profil);
+        }
+
+        $user->delete();
+
+        return response()->json([
+            'message' => 'Akun berhasil dihapus'
+        ], 200);
+    } catch (\Exception $e) {
+        return response()->json([
+            'message' => 'Gagal menghapus akun',
+            'error' => $e->getMessage()
+        ], 500);
+    }
+}
+public function profile()
+{
+    $user = auth()->user();
+
+    return response()->json([
+        'user' => $user->load('anak') // Menyertakan data anak-anak
+    ]);
+}
+// Orangtua bisa punya banyak anak
+public function anak()
+{
+    return $this->hasMany(User::class, 'orangtua_id');
+}
+
+// Anak punya satu orangtua
+public function orangtua()
+{
+    return $this->belongsTo(User::class, 'orangtua_id');
 }
 
 }

@@ -7,6 +7,8 @@ use Illuminate\Http\Request;
 use App\Models\Ekskul;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\DB;
+use App\Models\AbsensiEkskul;
 
 
 class EkskulController extends Controller
@@ -140,6 +142,79 @@ public function getByName($name)
     }
 
     return response()->json($ekskul);
+}
+public function destroy($id)
+{
+    $ekskul = Ekskul::find($id);
+
+    if (!$ekskul) {
+        return response()->json(['message' => 'Ekskul tidak ditemukan'], 404);
+    }
+
+    // Hapus file gambar jika ada
+    if ($ekskul->image && str_contains($ekskul->image, 'storage/')) {
+        $relativePath = str_replace(asset(''), '', $ekskul->image);
+        $filePath = public_path($relativePath);
+        if (file_exists($filePath)) {
+            unlink($filePath);
+        }
+    }
+
+    $ekskul->delete();
+
+    return response()->json(['message' => 'Ekskul berhasil dihapus.']);
+}
+public function statistikEkskul(Request $request)
+{
+    $ekskulId = $request->query('ekskul_id'); // ID ekskul dari query
+
+    if (!$ekskulId) {
+        return response()->json(['message' => 'Ekskul ID wajib dikirim.'], 400);
+    }
+
+    // ✅ Hitung jumlah anggota ekskul ini per kelas (tanpa JOIN)
+    $anggota = DB::table('anggota_ekskul')
+        ->where('ekskul_id', $ekskulId)
+        ->select('kelas', DB::raw('count(*) as jumlah_anggota'))
+        ->groupBy('kelas')
+        ->get()
+        ->keyBy('kelas');
+
+    // ✅ Hitung jumlah total siswa per kelas
+    $siswa = DB::table('users')
+        ->where('role', 'siswa')
+        ->select('kelas', DB::raw('count(*) as jumlah_siswa'))
+        ->groupBy('kelas')
+        ->get();
+
+    // ✅ Gabungkan hasil
+    $result = $siswa->map(function ($item) use ($anggota) {
+        return [
+            'name' => $item->kelas,
+            'Anggota' => $anggota[$item->kelas]->jumlah_anggota ?? 0,
+            'Siswa' => $item->jumlah_siswa,
+        ];
+    });
+
+    return response()->json($result);
+}
+
+public function riwayatKehadiran($id, Request $request)
+{
+    $bulan = $request->query('bulan');
+    $tahun = $request->query('tahun');
+
+    if (!$bulan || !$tahun) {
+        return response()->json(['error' => 'Parameter bulan dan tahun wajib diisi'], 400);
+    }
+
+    $riwayat = AbsensiEkskul::where('anggota_id', $id) // ✅ nama foreign key benar
+        ->whereMonth('tanggal', $bulan)
+        ->whereYear('tanggal', $tahun)
+        ->orderBy('tanggal', 'asc')
+        ->get(['tanggal', 'status', 'waktu_absen']); // ✅ pakai nama kolom yang benar
+
+    return response()->json($riwayat);
 }
 
 }
