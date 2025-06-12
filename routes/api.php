@@ -119,7 +119,7 @@ Route::post('/events', [EventController::class, 'store']);
 Route::delete('/events/{date}', [EventController::class, 'destroy']);
 
 Route::get('/informasi', [InformasiUmumController::class, 'index']);
-Route::middleware('auth:api')->post('/informasi', [InformasiUmumController::class, 'store']);
+Route::middleware('auth:api')->post('/input-informasi', [InformasiUmumController::class, 'store']);
 Route::put('/informasi/{id}', [InformasiUmumController::class, 'update']);
 Route::delete('/informasi/{id}', [InformasiUmumController::class, 'destroy']);
 

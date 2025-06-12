@@ -325,6 +325,9 @@ public function listAbsensi(Request $request)
     // Filter hanya user dengan nisn tidak null dan tidak kosong
     $query->whereNotNull('nisn')->where('nisn', '!=', '');
 
+    // Filter role hanya siswa
+    $query->where('role', 'siswa');
+
     // Filter nama jika ada
     if ($request->has('search') && $request->search !== '') {
         $query->where('nama', 'like', '%' . $request->search . '%');
@@ -362,10 +365,10 @@ public function listAbsensi(Request $request)
     return response()->json($data);
 }
 
+
 public function getAbsensiByNisn(Request $request)
 {
-    $nisn = $request->query('nisn');  // Ambil nisn dari query parameter
-
+    $nisn = $request->query('nisn'); 
     if (!$nisn) {
         return response()->json([
             'message' => 'Parameter nisn harus disertakan.'
@@ -380,7 +383,6 @@ public function getAbsensiByNisn(Request $request)
         ], 404);
     }
 
-    // Ambil data absensi
     $absensi = Absensi::where('user_id', $siswa->id)
         ->orderBy('tanggal', 'desc')
         ->get(['tanggal', 'status', 'waktu_absen']);

@@ -16,22 +16,20 @@ class InformasiUmumController extends Controller
 
 public function store(Request $request)
 {
-    $user = Auth::guard('api')->user(); // Ambil user dari token
-
+    $user = Auth::guard('api')->user();
     if (!$user) {
         return response()->json(['message' => 'Unauthorized'], 401);
     }
 
-    // Simpan data dengan user_id
     $info = InformasiUmum::create([
         'title' => $request->title,
         'text' => $request->text,
-        'photo' => $user->profile_photo_path ?? 'default.jpg',
+        'photo' => $user->foto_profil ?? 'default.jpg',
         'date' => $request->date,
         'time' => $request->time,
         'color' => $request->color,
         'author' => $user->nama,
-        'user_id' => $user->id,  // <-- ini tambahannya
+        'user_id' => $user->id,
     ]);
 
     return response()->json($info);
